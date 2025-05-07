@@ -79,20 +79,20 @@ resource "aws_security_group_rule" "eks_node_eks_control_plane" {
   security_group_id = module.eks_node_sg.sg_id
 }
 
-resource "aws_security_group_rule" "node_alb_ingress" {
-  type              = "ingress"
-  from_port         = 30000
-  to_port           = 32767
-  protocol          = "tcp"
-  source_security_group_id       = module.alb_ingress_sg.sg_id
-  security_group_id = module.eks_node_sg.sg_id
-}
+# resource "aws_security_group_rule" "node_alb_ingress" {
+#   type              = "ingress"
+#   from_port         = 30000
+#   to_port           = 32767
+#   protocol          = "tcp"
+#   source_security_group_id       = module.alb_ingress_sg.sg_id
+#   security_group_id = module.eks_node_sg.sg_id
+# }
 
 resource "aws_security_group_rule" "node_vpc" {
   type              = "ingress"
   from_port         = 0
   to_port           = 0
-  protocol          = "tcp"
+  protocol          = "-1" #this is huge mistake, if value is tcp, DNS will work in EKS. UDP traffic is required. So make it All traffic
   cidr_blocks = ["10.0.0.0/16"] # our private IP address range
   security_group_id = module.eks_node_sg.sg_id
 }
@@ -163,4 +163,21 @@ resource "aws_security_group_rule" "mysql_eks_node" {
   security_group_id = module.mysql_sg.sg_id
 }
 
+resource "aws_security_group_rule" "eks_control_plane_bastion" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  source_security_group_id = module.bastion_sg.sg_id
+  security_group_id = module.eks_control_plane_sg.sg_id
+}
+
+resource "aws_security_group_rule" "eks_node_alb_ingress" {
+  type              = "ingress"
+  from_port         = 8080
+  to_port           = 8080
+  protocol          = "tcp"
+  source_security_group_id = module.alb_ingress_sg.sg_id
+  security_group_id = module.eks_node_sg.sg_id
+}
 
